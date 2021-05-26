@@ -7,3 +7,4 @@ ln -s ../../devtank_prod_tester buildroot/package/devtank_prod_tester
 cd buildroot
 git apply ../gtk3.patch
 git apply ../devtank.patch
+git apply ../mako_br_fix.patch
