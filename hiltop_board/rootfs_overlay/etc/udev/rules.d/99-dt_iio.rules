@@ -1,0 +1,4 @@
+KERNEL=="iio:device[0-9]*", SUBSYSTEM=="iio", GROUP="iio"
+SUBSYSTEM=="iio", ACTION=="add", SYMLINK+="$env{OF_NAME}"
+SUBSYSTEM=="iio", ACTION=="add", RUN+="/bin/sh -c 'chgrp -R iio /sys/bus/iio/devices/%k/*'", RUN+="/bin/sh -c 'chmod -R g=u /sys/bus/iio/devices/%k/*'"
+SUBSYSTEM=="iio", ACTION=="add", SYMLINK=="pwr_adc", RUN+="/bin/sh -c 'echo 1 | tee /sys/bus/iio/devices/%k/in_voltage?_scale'"

@@ -1,0 +1,48 @@
+From 27f3d5439adffb89ceeeb3d9f39e9bbb7620eacc Mon Sep 17 00:00:00 2001
+From: Joe Burmeister <joe.burmeister@devtank.co.uk>
+Date: Mon, 13 May 2019 12:52:55 +0100
+Subject: [PATCH 2/3] Expand MCP23S08 driver for use as interrupt
+ controller.(v3)
+
+To be used as interrupt controller, pin control callbacks needed to
+setup the registers.
+
+Signed-off-by: Joe Burmeister <joe.burmeister@devtank.co.uk>
+---
+ drivers/pinctrl/pinctrl-mcp23s08.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/drivers/pinctrl/pinctrl-mcp23s08.c b/drivers/pinctrl/pinctrl-mcp23s08.c
+index ce2d8014b7e0..089dfb0e3399 100644
+--- a/drivers/pinctrl/pinctrl-mcp23s08.c
++++ b/drivers/pinctrl/pinctrl-mcp23s08.c
+@@ -232,6 +232,12 @@ static int mcp_pinconf_get(struct pinctrl_dev *pctldev, unsigned int pin,
+ 			return ret;
+ 		status = (data & BIT(pin)) ? 1 : 0;
+ 		break;
++	case PIN_CONFIG_OUTPUT:
++		ret = mcp_read(mcp, MCP_IODIR, &data);
++		if (ret < 0)
++			return ret;
++		status = (data & BIT(pin)) ? 0 : 1; /* true is input */
++		break;
+ 	default:
+ 		return -ENOTSUPP;
+ 	}
+@@ -258,6 +264,13 @@ static int mcp_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
+ 		case PIN_CONFIG_BIAS_PULL_UP:
+ 			ret = mcp_set_bit(mcp, MCP_GPPU, pin, arg);
+ 			break;
++		case PIN_CONFIG_OUTPUT:
++			ret = mcp_set_bit(mcp, MCP_IODIR, pin, false);
++			if (!ret && arg)
++				ret = mcp_set_bit(mcp, MCP_GPPU, pin, true);
++			else
++				ret = mcp_set_bit(mcp, MCP_GPPU, pin, false);
++			break;
+ 		default:
+ 			dev_dbg(mcp->dev, "Invalid config param %04x\n", param);
+ 			return -ENOTSUPP;
+-- 
+2.30.1
+

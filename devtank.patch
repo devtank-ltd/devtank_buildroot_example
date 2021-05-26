@@ -1,0 +1,33 @@
+From a433323681a03b7bc9476636614fa6e7454ee429 Mon Sep 17 00:00:00 2001
+From: Joe Burmeister <joe.burmeister@devtank.co.uk>
+Date: Wed, 26 May 2021 17:41:38 +0100
+Subject: [PATCH] Add Devtank Prod Tester.
+
+Signed-off-by: Joe Burmeister <joe.burmeister@devtank.co.uk>
+---
+ package/Config.in | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/package/Config.in b/package/Config.in
+index e420f02b37..ba0143f493 100644
+--- a/package/Config.in
++++ b/package/Config.in
+@@ -1227,6 +1227,7 @@ menu "External python modules"
+ 	source "package/python-typepy/Config.in"
+ 	source "package/python-typing/Config.in"
+ 	source "package/python-typing-extensions/Config.in"
++	source "package/python-tz/Config.in"
+ 	source "package/python-u-msgpack/Config.in"
+ 	source "package/python-ubjson/Config.in"
+ 	source "package/python-ujson/Config.in"
+@@ -2019,6 +2020,7 @@ menu "Mail"
+ endmenu
+ 
+ menu "Miscellaneous"
++        source "package/devtank-prod-tester/Config.in"
+ 	source "package/aespipe/Config.in"
+ 	source "package/bc/Config.in"
+ 	source "package/bitcoin/Config.in"
+-- 
+2.30.2
+

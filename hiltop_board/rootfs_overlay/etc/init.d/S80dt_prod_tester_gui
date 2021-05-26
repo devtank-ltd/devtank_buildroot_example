@@ -1,0 +1,61 @@
+#!/bin/sh
+#
+# Init XOrg
+#
+
+disk_wait() {
+    start_time=$(date '+%s')
+    now=$start_time
+    end_time=$(($start_time + 5))
+
+    while [ "$(grep /mnt/data /etc/mtab)" = "" -a $now -lt $end_time ]; do
+        logger -s -t dt_prod_tester_example -p 4 Disk late, waiting extra second.
+        sleep 1
+        now=$(date '+%s')
+    done
+}
+
+start() {
+	echo "Starting Xorg: "
+	Xorg :0 -nocursor -nolisten tcp > /tmp/Xorg.0.log 2>&1 &
+	disk_wait
+	if [ "$(grep /mnt/data /etc/mtab)" != "" ]; then
+		if [ ! -e /mnt/data/example ]; then
+			mkdir /mnt/data/example
+		fi
+		cd /opt/devtank/gui/
+		DISPLAY=:0 ./output/bin/example_tester_gui.sh --production --config config_sqlite_data.yaml  &
+	else
+		logger -s -t dt_prod_tester_example -p 0 No data disk folder. 2>&1 | tee /dev/tty1
+	fi
+}
+
+stop() {
+	echo "Stopping Xorg: "
+        # Get XOrg pid
+	pid=$(ps | grep Xorg| grep -v grep | head -n1 | awk '{print $1}')
+        if [ ! -z "$pid" ]; then
+            kill $pid
+        fi
+}
+
+restart() {
+	stop
+	sleep 1
+	start
+}
+
+case "$1" in
+	start)
+		start
+	;;
+	stop)
+		stop
+	;;
+	restart|reload)
+		restart
+	;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac

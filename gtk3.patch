@@ -1,0 +1,69 @@
+From 25ddedf443dbf5e5a48e9cb7cbc94712802f2ff2 Mon Sep 17 00:00:00 2001
+From: Joe Burmeister <joe.burmeister@devtank.co.uk>
+Date: Wed, 7 Apr 2021 22:56:19 +0100
+Subject: [PATCH] GTK3 build patches for Python use.
+
+Signed-off-by: Joe Burmeister <joe.burmeister@devtank.co.uk>
+---
+ package/atk/atk.mk                       | 2 +-
+ package/gdk-pixbuf/gdk-pixbuf.mk         | 2 +-
+ package/pango/pango.mk                   | 3 ++-
+ package/python-gobject/python-gobject.mk | 2 +-
+ 4 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/package/atk/atk.mk b/package/atk/atk.mk
+index dfeb4de8b2..a68a9f97d8 100644
+--- a/package/atk/atk.mk
++++ b/package/atk/atk.mk
+@@ -11,7 +11,7 @@ ATK_SITE = http://ftp.gnome.org/pub/gnome/sources/atk/$(ATK_VERSION_MAJOR)
+ ATK_LICENSE = LGPL-2.0+
+ ATK_LICENSE_FILES = COPYING
+ ATK_INSTALL_STAGING = YES
+-ATK_DEPENDENCIES = libglib2 $(TARGET_NLS_DEPENDENCIES)
++ATK_DEPENDENCIES = libglib2 $(TARGET_NLS_DEPENDENCIES) gobject-introspection
+ 
+ ifeq ($(BR2_PACKAGE_GOBJECT_INTROSPECTION),y)
+ ATK_CONF_OPTS += -Dintrospection=true
+diff --git a/package/gdk-pixbuf/gdk-pixbuf.mk b/package/gdk-pixbuf/gdk-pixbuf.mk
+index 1bd422c0a1..14ae9dfe2a 100644
+--- a/package/gdk-pixbuf/gdk-pixbuf.mk
++++ b/package/gdk-pixbuf/gdk-pixbuf.mk
+@@ -14,7 +14,7 @@ GDK_PIXBUF_CPE_ID_VENDOR = gnome
+ GDK_PIXBUF_INSTALL_STAGING = YES
+ GDK_PIXBUF_DEPENDENCIES = \
+ 	host-gdk-pixbuf host-libglib2 host-pkgconf \
+-	libglib2 $(if $(BR2_ENABLE_LOCALE),,libiconv)
++	libglib2 $(if $(BR2_ENABLE_LOCALE),,libiconv) gobject-introspection
+ HOST_GDK_PIXBUF_DEPENDENCIES = host-libpng host-pkgconf host-libglib2
+ 
+ GDK_PIXBUF_CONF_OPTS = \
+diff --git a/package/pango/pango.mk b/package/pango/pango.mk
+index 803e46f193..aacf6b44b9 100644
+--- a/package/pango/pango.mk
++++ b/package/pango/pango.mk
+@@ -24,7 +24,8 @@ PANGO_DEPENDENCIES = \
+ 	cairo \
+ 	harfbuzz \
+ 	fontconfig \
+-	freetype
++	freetype \
++	gobject-introspection
+ HOST_PANGO_DEPENDENCIES = \
+ 	host-pkgconf \
+ 	host-libglib2 \
+diff --git a/package/python-gobject/python-gobject.mk b/package/python-gobject/python-gobject.mk
+index 0cada82fb7..d360e1e87c 100644
+--- a/package/python-gobject/python-gobject.mk
++++ b/package/python-gobject/python-gobject.mk
+@@ -18,7 +18,7 @@ PYTHON_GOBJECT_DEPENDENCIES = \
+ 	python3
+ 
+ PYTHON_GOBJECT_CONF_OPTS += \
+-	-Dpycairo=false \
++	-Dpycairo=true \
+ 	-Dtests=false
+ 
+ # A sysconfigdata_name must be manually specified or the resulting .so
+-- 
+2.30.2
+

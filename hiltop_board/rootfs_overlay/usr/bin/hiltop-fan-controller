@@ -1,0 +1,167 @@
+#! /usr/bin/python3
+
+import os
+import sys
+import time
+import glob
+import argparse
+import traceback
+
+_DEBUG = True if "DEBUG" in os.environ else False
+
+parser = argparse.ArgumentParser(description='HILTOP fan controller')
+parser.add_argument('-d','--debug', help='Show debug messages', action='store_true')
+parser.add_argument('-v','--verbose', help='Show verbose messages', action='store_true')
+parser.add_argument('--version', help='Show tool\'s version', action='store_true')
+
+def debug_print(msg):
+    if _DEBUG:
+        print(msg)
+
+def _write_file_path(path, line):
+    debug_print("Writing line '%s' to '%s'" % (line.strip('\n'), path))
+    assert os.path.exists(path)
+    try:
+        with open(path, "w") as f:
+            f.write(line)
+    except:
+        print("Failed to write to", path)
+        traceback.print_exc()
+
+
+def _read_file_path(path, default_line=""):
+    try:
+        with open(path, "r") as f:
+            line = f.readline()
+    except:
+        print("Failed to read from", path)
+        traceback.print_exc()
+        return default_line
+
+    debug_print("Read line '%s' from '%s'" % (line.strip('\n'), path))
+    return line
+
+
+def _read_int_file_path(path, default_value=0):
+    line = _read_file_path(path, None)
+    if line is None:
+        return default_value
+    return int(line)
+
+
+class pwm_fan_t:
+    def __init__(self, pwm_ctrl_sys_path, pwm_id, gpio_id, period, inversed, min_speed):
+        self._pwm_sys_path = pwm_ctrl_sys_path + "/pwm%u" % pwm_id
+        self._period = period
+        self._min_speed = min_speed
+        self._gpio_path = "/sys/class/gpio/gpio%u" % gpio_id
+
+        if not os.path.exists(self._pwm_sys_path):
+            _write_file_path(pwm_ctrl_sys_path + "/export", "%u\n" % pwm_id)
+
+        _write_file_path(self._pwm_sys_path + "/period", "%u\n" % period)
+        _write_file_path(self._pwm_sys_path + "/polarity",
+                         "inversed\n" if inversed else "normal\n")
+        _write_file_path(self._pwm_sys_path + "/enable", "1\n")
+        _write_file_path(self._pwm_sys_path + "/duty_cycle", "0\n")
+
+        if not os.path.exists(self._gpio_path):
+            _write_file_path("/sys/class/gpio/export", "%u\n" % gpio_id)
+        _write_file_path(self._gpio_path + "/direction", "out\n")
+        _write_file_path(self._gpio_path + "/value", "0\n")
+
+    @property
+    def speed_frac(self):
+        duty = _read_int_file_path(self._pwm_sys_path + "/duty_cycle")
+        return duty / self._period 
+
+    @speed_frac.setter
+    def speed_frac(self, fraction):
+        assert fraction >= 0 and fraction <= 1
+        if fraction < self._min_speed:
+            fraction = 0
+        _write_file_path(self._gpio_path + "/value",
+                         "1\n" if fraction > 0 else "0\n")
+        duty = self._period * fraction
+        _write_file_path(self._pwm_sys_path + "/duty_cycle",
+                         "%u\n" % duty)
+
+
+class sys_fs_temp_t:
+    def __init__(self, path, cold_temp, hot_temp):
+        self._syspath = path
+        self.hot_threshold  = hot_temp
+        self.cold_threshold = cold_temp
+
+    @property
+    def temp(self):
+        return _read_int_file_path(self._syspath, 23000)
+
+    @property
+    def is_hot(self):
+        return self.temp > self.hot_threshold
+
+    @property
+    def is_cold(self):
+        return self.temp < self.cold_threshold
+
+
+def main():
+    global _DEBUG
+
+    args = vars(parser.parse_args())
+
+    if args['version']:
+        print("Version 1.1")
+        sys.exit(0)
+
+    if args['debug']:
+        _DEBUG = True
+
+    verbose = args['verbose'] or _DEBUG
+
+    temp_inputs = glob.glob("/sys/class/hwmon/hwmon*/temp*_input")
+
+    sensors = []
+
+    for temp_input in temp_inputs:
+        temp_input_name = os.path.join(os.path.dirname(temp_input), "name")
+        is_cpu = False
+        if os.path.exists(temp_input_name):
+            name = _read_file_path(temp_input_name)
+            if name == "cpu_thermal":
+                is_cpu = True
+        if is_cpu:
+            sensors += [sys_fs_temp_t(temp_input, 60000, 70000) ]
+        else:
+            sensors += [sys_fs_temp_t(temp_input, 40000, 60000) ]
+
+    fan_obj = pwm_fan_t("/sys/devices/platform/soc/3f20c000.pwm/pwm/pwmchip0", 1, 29, 100000000, True, 0.5)
+
+    while True:
+        is_hot = sum([ sensor.is_hot for sensor in sensors ])
+        is_cold = sum([ sensor.is_cold for sensor in sensors ])
+
+        if verbose:
+            print("Fan speed fraction :", fan_obj.speed_frac)
+            print("Sensors temps :", ",".join([str(sensor.temp) for sensor in sensors]))
+
+        if is_hot:
+            if verbose:
+                print("Sensor(s) reporting it is hot")
+            if fan_obj.speed_frac < 1:
+                if fan_obj.speed_frac < 0.5:
+                    fan_obj.speed_frac = 0.5
+                else:
+                    fan_obj.speed_frac += 0.1
+        elif is_cold:
+            if verbose:
+                print("Sensor(s) reporting it is cold")
+            if fan_obj.speed_frac > 0.5:
+                fan_obj.speed_frac -= 0.1
+            else:
+                fan_obj.speed_frac = 0
+        time.sleep(5)
+
+if __name__ == "__main__":
+    main()

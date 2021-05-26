@@ -1,0 +1,8 @@
+# Is it a backplane USB card
+ACTION=="add", DEVPATH=="/devices/platform/soc/3f980000.usb/usb1/1-1/1-1.7/1-1.7.[0-6]*", GOTO="backplane_usb"
+GOTO="end"
+
+LABEL="backplane_usb"
+# Loti has this own network adaptor
+SUBSYSTEM=="net", NAME="loti_eth"
+LABEL="end"

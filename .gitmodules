@@ -1,0 +1,7 @@
+[submodule "dtlib"]
+	path = dtlib
+	url = devtank:/git/devtank-dtlib.git
+
+[submodule "buildroot"]
+	path = buildroot
+	url = git://git.buildroot.net/buildroot

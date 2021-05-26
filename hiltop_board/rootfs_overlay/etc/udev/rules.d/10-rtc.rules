@@ -1,0 +1,1 @@
+SUBSYSTEM=="rtc", ACTION=="add", RUN+="/sbin/hwclock -s -f /dev/%k" 

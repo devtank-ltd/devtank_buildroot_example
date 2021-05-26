@@ -1,0 +1,8 @@
+SUBSYSTEM!="block", GOTO="data-disk-end"
+DEVPATH!="*usb*/1-1/1-1.5/1-1.5:1.0*", GOTO="data-disk-end"
+
+IMPORT{builtin}="blkid"
+
+ENV{ID_FS_LABEL_ENC}=="data" RUN+="/bin/mount /dev/%k /mnt/data"
+
+LABEL="data-disk-end"

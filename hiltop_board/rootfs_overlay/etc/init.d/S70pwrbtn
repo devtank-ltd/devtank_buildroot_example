@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Spawn waiting for Power Button.
+#
+
+start() {
+	printf "Starting Power Button check loop: "
+        /opt/devtank/power_button.sh&
+}
+
+stop() {
+	printf "Stopping Power Button check loop: "
+        pid=$(ps | grep evtest | grep -v grep | head -n1 | awk '{print $1}')
+        if [ ! -z "$pid" ]; then
+            kill $pid
+        fi
+}
+
+restart() {
+	stop
+	sleep 2
+	start
+}
+
+case "$1" in
+	start)
+		start
+	;;
+	stop)
+		stop
+	;;
+	restart|reload)
+		restart
+	;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac

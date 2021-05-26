@@ -1,0 +1,37 @@
+From 952175b812eb0a5c48d852020b8279a2b368dbe1 Mon Sep 17 00:00:00 2001
+From: Joe Burmeister <joe.burmeister@devtank.co.uk>
+Date: Fri, 16 Apr 2021 11:08:07 +0100
+Subject: [PATCH 1/2] spi: Handle SPI device setup callback failure.
+
+If the setup callback failed, but the controller has auto_runtime_pm
+and set_cs, the setup failure could be missed.
+
+Signed-off-by: Joe Burmeister <joe.burmeister@devtank.co.uk>
+---
+ drivers/spi/spi.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/spi/spi.c b/drivers/spi/spi.c
+index 8b283b2c1668..0c39178f4401 100644
+--- a/drivers/spi/spi.c
++++ b/drivers/spi/spi.c
+@@ -3388,8 +3388,15 @@ int spi_setup(struct spi_device *spi)
+ 
+ 	mutex_lock(&spi->controller->io_mutex);
+ 
+-	if (spi->controller->setup)
++	if (spi->controller->setup) {
+ 		status = spi->controller->setup(spi);
++		if (status) {
++			mutex_unlock(&spi->controller->io_mutex);
++			dev_err(&spi->controller->dev, "Failed to setup device: %d\n",
++				status);
++			return status;
++		}
++	}
+ 
+ 	if (spi->controller->auto_runtime_pm && spi->controller->set_cs) {
+ 		status = pm_runtime_get_sync(spi->controller->dev.parent);
+-- 
+2.30.2
+

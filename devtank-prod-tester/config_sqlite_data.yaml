@@ -1,0 +1,5 @@
+{
+    type: sqlite,
+    filename: /mnt/data/example/example.db,
+    db_files: /mnt/data/example/db_files
+}

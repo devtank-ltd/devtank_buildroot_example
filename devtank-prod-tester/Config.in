@@ -1,0 +1,17 @@
+config BR2_PACKAGE_DEVTANK_PROD_TESTER
+	bool "devtank_prod-tester"
+	depends on BR2_PACKAGE_PYTHON_GOBJECT
+	depends on BR2_PACKAGE_LIBGTK3
+	depends on BR2_PACKAGE_LIBGTK3_BROADWAY
+	depends on BR2_PACKAGE_LIBGTK3_X11
+	depends on BR2_PACKAGE_PYTHON_PYCAIRO
+	depends on BR2_PACKAGE_PYTHON_NETIFACES
+	depends on BR2_PACKAGE_PYTHON_PARAMIKO
+	depends on BR2_PACKAGE_PYTHON_DATEUTIL
+	depends on BR2_PACKAGE_PYTHON_TZ
+	depends on BR2_PACKAGE_LIBYAML
+	depends on BR2_PACKAGE_LIBIIO
+	help
+	  Devtank Prod Tester
+	  
+	  Devtank production tester example
