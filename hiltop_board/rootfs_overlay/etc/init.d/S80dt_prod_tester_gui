@@ -24,7 +24,7 @@ start() {
 			mkdir /mnt/data/example
 		fi
 		cd /opt/devtank/gui/
-		DISPLAY=:0 ./output/bin/example_tester_gui.sh --production --config config_sqlite_data.yaml  &
+		GDK_SCALE=2 DISPLAY=:0 ./output/bin/example_tester_gui.sh --production --config config_sqlite_data.yaml  &
 	else
 		logger -s -t dt_prod_tester_example -p 0 No data disk folder. 2>&1 | tee /dev/tty1
 	fi
